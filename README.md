@@ -38,12 +38,13 @@ Run following command one by one:
 ```bash
 gcc -shared -o libreed_solomon.so reed_solomon.c -fPIC
 go build ./main.go
-./main
+./main "Reed-Solomon codes are a group of error-correcting codes. This is a test message."
 ```
 
 You should see the following output:
 ```
-Input: Hello, world!
-Encoded: Ifmmp-!xpsme"
-Decoded: Hello, world!
+Original message: Reed-Solomon codes are a group of error-correcting codes. This is a test message.
+Message encoded.
+Erasure simulated.
+Decoded message: Reed-Solomon codes are a group of error-correcting codes. This is a test message.
 ```

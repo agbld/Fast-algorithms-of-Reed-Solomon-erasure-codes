@@ -19,7 +19,7 @@ func main() {
     input := os.Args[1]
 
     // Convert Go strings to C strings
-    fmt.Println("Message:", input)
+    fmt.Println("Original message:", input)
     cMessage := C.CString(input)
     defer C.free(unsafe.Pointer(cMessage))
 
@@ -36,15 +36,16 @@ func main() {
 
     // call the encode function
     C.encode(cMessage, cCodeword)
+    fmt.Println("Message encoded.")
 
     // call the erasure_simulate function
     var cErasure *C._Bool = (*C._Bool)(C.malloc(2<<16*16))
     C.erasure_simulate(cCodeword, cErasure)
+    fmt.Println("Erasure simulated.")
 
     // call the decode function
-    // decode(GFSymbol* codeword, _Bool* erasure, GFSymbol* log_walsh2)
     C.decode(cCodeword, cErasure)
     
     // print the output
-    fmt.Println("Codeword:", C.GoString(cCodeword))
+    fmt.Println("Decoded message:", C.GoString(cCodeword))
 }
