@@ -36,7 +36,7 @@ NOTE: You can actually skip the SSH relative steps if they are useless for you.
 ## Run
 Run following command one by one:
 ```bash
-gcc -shared -o libreed_solomon.so RSErasureCode.c -fPIC
+gcc -shared -o libreed_solomon.so reed_solomon.c -fPIC
 go build ./main.go
 ./main
 ```

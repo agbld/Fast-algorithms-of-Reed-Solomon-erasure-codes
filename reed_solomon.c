@@ -28,6 +28,8 @@ GFSymbol Base[len] = {1, 44234, 15374, 5694, 50562, 60718, 37196, 16402, 27800, 
 #define Size (1<<len)//Field size
 #define mod (Size-1)
 
+int k = 512; //message length (GFSymbol, 2 bytes)
+
 GFSymbol log_tbl[Size];
 GFSymbol exp_tbl[Size];
 
@@ -305,13 +307,14 @@ void get_char_data(GFSymbol* data, uint32_t k, char* char_data){
 	memcpy(char_data, data, k*2*sizeof(char));
 }
 
-void encode(char* data, uint32_t k, GFSymbol* codeword){
+void encode(char* data, char* codeword){
 	GFSymbol aligned_data[k];
 	align_input_to_k(data, k, aligned_data);
-	encodeL(aligned_data, k, codeword);
+	encodeL(aligned_data, k, (GFSymbol*)(codeword));
 }
 
-void erasure_simulate(GFSymbol* codeword, uint32_t k, _Bool* erasure){
+void erasure_simulate(char* codeword_c, _Bool* erasure){
+	GFSymbol* codeword = (GFSymbol*)codeword_c;
 	for(int i=k; i<Size; i++)
 		erasure[i] = 1;
 
@@ -328,39 +331,44 @@ void erasure_simulate(GFSymbol* codeword, uint32_t k, _Bool* erasure){
 		if(erasure[i]) codeword[i] = 0;
 }
 
-void decode(GFSymbol* codeword, _Bool* erasure, GFSymbol* log_walsh2){
-	decode_init(erasure, log_walsh2);//Evaluate error locator polynomial
-	decode_main(codeword, erasure, log_walsh2);
-}
-
-int main(){
-	init();//fill log table and exp table
-	init_dec();//compute factors used in erasure decoder
-
-	//-----------Generating message----------
-	int k = 512;
-	char msg[] = "Reed-Solomon codes are a group of error-correcting codes. This is a test message.";
-
-	//---------encoding----------
-	GFSymbol codeword[Size];
-	encode(msg, k, codeword);
-	
-	//--------erasure simulation---------
-	_Bool erasure[Size];
-	erasure_simulate(codeword, k, erasure);
-
-	// ---------decoding----------------
+void decode(char* codeword, _Bool* erasure){
 	GFSymbol log_walsh2[Size];
-	decode(codeword, erasure, log_walsh2);
-	
-	char decoded_msg[k*2];
-	get_char_data(codeword, k, decoded_msg);
-	printf("Original Message: %s\n", msg);
-	printf("Decoded Message: %s\n", decoded_msg);
-	if (strcmp(msg, decoded_msg) == 0)
-		printf("Decoding is successful!\n");
-	else
-		printf("Decoding Error!\n");
-
-	return 1;
+	decode_init(erasure, log_walsh2);//Evaluate error locator polynomial
+	decode_main((GFSymbol*)(codeword), erasure, log_walsh2);
 }
+
+void set_k(uint32_t k){
+	k = k;
+}
+
+// int main(){
+	// init();//fill log table and exp table
+	// init_dec();//compute factors used in erasure decoder
+
+	// //-----------Generating message----------
+	// k = 512;
+	// char msg[] = "Reed-Solomon codes are a group of error-correcting codes. This is a test message.";
+
+	// //---------encoding----------
+	// GFSymbol codeword[Size];
+	// encode(msg, codeword);
+	
+	// //--------erasure simulation---------
+	// _Bool erasure[Size];
+	// erasure_simulate(codeword, erasure);
+
+	// // ---------decoding----------------
+	// GFSymbol log_walsh2[Size];
+	// decode(codeword, erasure, log_walsh2);
+	
+	// char decoded_msg[k*2];
+	// get_char_data(codeword, k, decoded_msg);
+	// printf("Original Message: %s\n", msg);
+	// printf("Decoded Message: %s\n", decoded_msg);
+	// if (strcmp(msg, decoded_msg) == 0)
+	// 	printf("Decoding is successful!\n");
+	// else
+	// 	printf("Decoding Error!\n");
+
+// 	return 1;
+// }
