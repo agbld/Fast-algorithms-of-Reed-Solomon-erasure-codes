@@ -288,9 +288,79 @@ void test(int k){
 	return;
 }
 
+void align_input_to_k(char* data, uint32_t k, GFSymbol* aligned_data){
+	memset(aligned_data, 0, k*2*sizeof(char));
+	uint32_t i = 0;
+	while(1){
+		if (data[i*2 + 1] == '\0'){
+			aligned_data[i] = data[i*2];
+			break;
+		}
+		aligned_data[i] = data[i*2 + 1] << 8 | data[i*2];
+		i++;
+	}
+}
+
+void get_char_data(GFSymbol* data, uint32_t k, char* char_data){
+	memcpy(char_data, data, k*2*sizeof(char));
+}
+
+void encode(char* data, uint32_t k, GFSymbol* codeword){
+	GFSymbol aligned_data[k];
+	align_input_to_k(data, k, aligned_data);
+	encodeL(aligned_data, k, codeword);
+}
+
+void erasure_simulate(GFSymbol* codeword, uint32_t k, _Bool* erasure){
+	for(int i=k; i<Size; i++)
+		erasure[i] = 1;
+
+	for(int i=Size-1; i>0; i--){//permuting the erasure array
+		int pos = rand()%(i+1);
+		if(i != pos){
+			_Bool tmp = erasure[i];
+			erasure[i] = erasure[pos];
+			erasure[pos] = tmp;
+		}
+	}
+
+	for (int i=0; i<Size; i++)//erasure codeword symbols
+		if(erasure[i]) codeword[i] = 0;
+}
+
+void decode(GFSymbol* codeword, _Bool* erasure, GFSymbol* log_walsh2){
+	decode_init(erasure, log_walsh2);//Evaluate error locator polynomial
+	decode_main(codeword, erasure, log_walsh2);
+}
+
 int main(){
 	init();//fill log table and exp table
 	init_dec();//compute factors used in erasure decoder
-	test(Size/2);//test(int k), k: message size
+
+	//-----------Generating message----------
+	int k = 512;
+	char msg[] = "Reed-Solomon codes are a group of error-correcting codes. This is a test message.";
+
+	//---------encoding----------
+	GFSymbol codeword[Size];
+	encode(msg, k, codeword);
+	
+	//--------erasure simulation---------
+	_Bool erasure[Size];
+	erasure_simulate(codeword, k, erasure);
+
+	// ---------decoding----------------
+	GFSymbol log_walsh2[Size];
+	decode(codeword, erasure, log_walsh2);
+	
+	char decoded_msg[k*2];
+	get_char_data(codeword, k, decoded_msg);
+	printf("Original Message: %s\n", msg);
+	printf("Decoded Message: %s\n", decoded_msg);
+	if (strcmp(msg, decoded_msg) == 0)
+		printf("Decoding is successful!\n");
+	else
+		printf("Decoding Error!\n");
+
 	return 1;
 }
